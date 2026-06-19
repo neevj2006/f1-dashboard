@@ -2,6 +2,7 @@
 
 import type { ReactNode } from "react";
 import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import type { TooltipContentProps } from "recharts";
 
 type ResultRow = {
   driverNumber: number;
@@ -23,6 +24,13 @@ type StintRow = {
   compound: string | null;
   lapStart: number;
   lapEnd: number;
+};
+
+type LapChartRow = {
+  driver: string;
+  duration: number;
+  lap: number;
+  teamColor: string;
 };
 
 export function RaceInsights({
@@ -84,9 +92,7 @@ export function RaceInsights({
             <YAxis domain={["dataMin - 1", "dataMax + 1"]} tick={{ fill: "#a1a1aa", fontSize: 12 }} axisLine={false} tickLine={false} />
             <Tooltip
               cursor={{ fill: "rgba(255,255,255,0.05)" }}
-              formatter={(value, name, item) => [`${value}s on lap ${item.payload.lap}`, "Fastest lap"]}
-              contentStyle={{ background: "#09090b", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 8, color: "#fff" }}
-              labelStyle={{ color: "#fff" }}
+              content={(props) => <FastestLapTooltip {...props} />}
             />
             <Bar dataKey="duration" radius={[4, 4, 0, 0]}>
               {lapRows.map((row) => <Cell key={row.driver} fill={row.teamColor} />)}
@@ -116,7 +122,7 @@ export function RaceInsights({
                 </div>
                 <div className="relative h-8 overflow-hidden rounded bg-black/40 ring-1 ring-white/10">
                   <div className="absolute inset-y-0 rounded" style={{ left, width, background: color, boxShadow: `0 0 24px ${color}55` }}>
-                    <span className="absolute inset-0 grid place-items-center px-2 text-xs font-black text-black">
+                    <span className="absolute inset-0 grid place-items-center px-2 text-xs font-black text-white">
                       L{stint.lapStart}-{stint.lapEnd}
                     </span>
                   </div>
@@ -127,6 +133,34 @@ export function RaceInsights({
         </div>
       </Panel> : null}
     </section>
+  );
+}
+
+function FastestLapTooltip({
+  active,
+  payload,
+}: Partial<TooltipContentProps>) {
+  const row = payload?.[0]?.payload as LapChartRow | undefined;
+  if (!active || !row) return null;
+
+  return (
+    <div className="rounded border border-white/15 bg-zinc-950 px-3 py-2 text-sm text-zinc-300 shadow-2xl">
+      <div className="mb-2 flex items-center gap-2 font-black text-white">
+        <span
+          className="h-2.5 w-2.5 rounded-full"
+          style={{ backgroundColor: row.teamColor }}
+        />
+        {row.driver}
+      </div>
+      <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1">
+        <span className="text-zinc-500">Time</span>
+        <span className="text-right font-black text-white">
+          {row.duration.toFixed(3)}s
+        </span>
+        <span className="text-zinc-500">Lap</span>
+        <span className="text-right font-black text-white">{row.lap}</span>
+      </div>
+    </div>
   );
 }
 
@@ -142,8 +176,8 @@ function Panel({ title, children }: { title: string; children: ReactNode }) {
 function compoundColor(compound: string) {
   const key = compound.toLowerCase();
   if (key.includes("soft")) return "#ef4444";
-  if (key.includes("medium")) return "#facc15";
-  if (key.includes("hard")) return "#f8fafc";
+  if (key.includes("medium")) return "#d99a16";
+  if (key.includes("hard")) return "#a855f7";
   if (key.includes("inter")) return "#22c55e";
   if (key.includes("wet")) return "#3b82f6";
   return "#a1a1aa";
