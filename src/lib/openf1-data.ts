@@ -354,16 +354,30 @@ async function getRaceSessionForYear(year: number, race: RaceItem) {
   return { race: toRaceItem(meeting, sorted.findIndex((item) => item.meeting_key === meeting.meeting_key) + 1), sessions, raceSession };
 }
 
-async function getSessionPayload(sessionKey: number) {
-  const [results, startingGrid, laps, stints, weatherRows, raceControl, sessionDrivers] = await Promise.all([
+type DriverLookup = Pick<OpenF1Driver, "driver_number" | "name_acronym" | "team_colour">;
+
+async function getSessionPayload(sessionKey: number, fallbackDrivers: DriverLookup[] = []) {
+  const [results, startingGrid, laps] = await Promise.all([
     openF1Fetch<SessionResult[]>(`/session_result?session_key=${sessionKey}`, 180).catch(() => []),
     openF1Fetch<StartingGrid[]>(`/starting_grid?session_key=${sessionKey}`, 180).catch(() => []),
     openF1Fetch<Lap[]>(`/laps?session_key=${sessionKey}`, 180).catch(() => []),
+  ]);
+  await pause();
+  const [stints, weatherRows, raceControl] = await Promise.all([
     openF1Fetch<Stint[]>(`/stints?session_key=${sessionKey}`, 180).catch(() => []),
     openF1Fetch<Weather[]>(`/weather?session_key=${sessionKey}`, 180).catch(() => []),
     openF1Fetch<RaceControlMessage[]>(`/race_control?session_key=${sessionKey}`, 180).catch(() => []),
-    openF1Fetch<OpenF1Driver[]>(`/drivers?session_key=${sessionKey}`, 180).catch(() => []),
   ]);
+  await pause();
+  let sessionDrivers = await openF1Fetch<OpenF1Driver[]>(`/drivers?session_key=${sessionKey}`, 180).catch(() => []);
+
+  if (!sessionDrivers.length) {
+    const meetingKey = laps[0]?.meeting_key ?? results[0]?.meeting_key ?? startingGrid[0]?.meeting_key;
+    if (meetingKey) {
+      await pause();
+      sessionDrivers = await openF1Fetch<OpenF1Driver[]>(`/drivers?meeting_key=${meetingKey}`, 180).catch(() => []);
+    }
+  }
 
   const fastestByDriver = new Map<number, Lap>();
   for (const lap of laps) {
@@ -373,7 +387,9 @@ async function getSessionPayload(sessionKey: number) {
       fastestByDriver.set(lap.driver_number, lap);
     }
   }
-  const driverFor = (number: number) => sessionDrivers.find((driver) => driver.driver_number === number);
+  const driverFor = (number: number) =>
+    sessionDrivers.find((driver) => driver.driver_number === number) ??
+    fallbackDrivers.find((driver) => driver.driver_number === number);
   const codeFor = (number: number) => driverFor(number)?.name_acronym ?? String(number);
   const teamColorFor = (number: number) => color(driverFor(number)?.team_colour);
   const fastestLaps = [...fastestByDriver.values()]
@@ -456,7 +472,6 @@ export async function getRaceDetail(id: string): Promise<RaceDetailData | null> 
   const target = aliases[id] ?? id;
   const race = homeData.races.find((item) => item.id === target || String(item.meetingKey) === id);
   if (!race) return null;
-  const recentWinners = await getRecentTrackWinners(race);
 
   await pause();
   const sessions = await openF1Fetch<OpenF1Session[]>(`/sessions?meeting_key=${race.meetingKey}`, 300);
@@ -465,8 +480,9 @@ export async function getRaceDetail(id: string): Promise<RaceDetailData | null> 
     const previousRace = race.year === YEAR ? await getRaceSessionForYear(YEAR - 1, race) : null;
     if (previousRace) {
       await pause();
-      const previousPayload = await getSessionPayload(previousRace.raceSession.session_key);
+      const previousPayload = await getSessionPayload(previousRace.raceSession.session_key, homeData.drivers);
       if (previousPayload.results.length || previousPayload.startingGrid.length || previousPayload.fastestLaps.length || previousPayload.stints.length) {
+        const recentWinners = await getRecentTrackWinners(race);
         return {
           race,
           sessions,
@@ -485,11 +501,12 @@ export async function getRaceDetail(id: string): Promise<RaceDetailData | null> 
         };
       }
     }
+    const recentWinners = await getRecentTrackWinners(race);
     return { race, sessions, drivers: homeData.drivers, dataYear: race.year, dataRaceName: race.name, usingPreviousYear: false, results: [], startingGrid: [], fastestLaps: [], stints: [], raceControl: [], recentWinners };
   }
 
   await pause();
-  let payload = await getSessionPayload(raceSession.session_key);
+  let payload = await getSessionPayload(raceSession.session_key, homeData.drivers);
   let dataYear = race.year;
   let dataRaceName = race.name;
   let usingPreviousYear = false;
@@ -498,7 +515,7 @@ export async function getRaceDetail(id: string): Promise<RaceDetailData | null> 
     const previousRace = await getRaceSessionForYear(YEAR - 1, race);
     if (previousRace) {
       await pause();
-      const previousPayload = await getSessionPayload(previousRace.raceSession.session_key);
+      const previousPayload = await getSessionPayload(previousRace.raceSession.session_key, homeData.drivers);
       if (previousPayload.results.length || previousPayload.startingGrid.length || previousPayload.fastestLaps.length) {
         payload = previousPayload;
         dataYear = previousRace.race.year;
@@ -507,6 +524,8 @@ export async function getRaceDetail(id: string): Promise<RaceDetailData | null> 
       }
     }
   }
+
+  const recentWinners = await getRecentTrackWinners(race);
 
   return {
     race,
