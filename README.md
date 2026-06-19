@@ -1,36 +1,93 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# F1 Dashboard
+
+A modern Formula 1 dashboard built with Next.js. It brings together race calendar data, standings, circuit visuals, driver profiles, constructor profiles, and race-session insights in one responsive web app.
+
+Live demo: [f1-dashboard-tau-seven.vercel.app](https://f1-dashboard-tau-seven.vercel.app)
+
+## Features
+
+- Next race landing view with countdown, event metadata, and circuit preview
+- Full race calendar with race status, schedule context, and detail pages
+- Interactive race center pages with circuit maps, sectors, DRS zones, weather, starting grid, results, fastest laps, stints, race control messages, and recent winners
+- Driver standings, driver profile pages, season history charts, and driver imagery
+- Constructor standings, team profile pages, team colors, logos, and driver lineups
+- OpenF1 API integration with in-memory caching and optional Redis caching
+- Local GeoJSON circuit data for track rendering and map-style overlays
+- Responsive UI built with the Next.js App Router, React, Tailwind CSS, Framer Motion, Lucide icons, Recharts, and Turf.js
+
+## Tech Stack
+
+- Framework: Next.js 15, React 19, TypeScript
+- Styling: Tailwind CSS 4
+- Data and charts: OpenF1 API, Recharts, date-fns
+- Maps and geometry: GeoJSON, Turf.js, Leaflet, React Leaflet
+- UI utilities: Lucide React, Framer Motion, clsx, tailwind-merge
+- Optional cache: Redis through `REDIS_URL`
+
+## Project Structure
+
+```text
+src/
+  app/                      App Router pages and API routes
+  components/               Dashboard, navigation, chart, and UI components
+  lib/                      OpenF1 data access, caching, and utilities
+public/
+  assets/                   Driver photos and constructor logos
+  data/                     F1 circuit GeoJSON and location metadata
+```
 
 ## Getting Started
 
-First, run the development server:
+Install dependencies:
+
+```bash
+npm install
+```
+
+Run the development server:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Environment Variables
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+The app runs without required environment variables. For shared server-side caching, you can optionally add:
 
-## Learn More
+```bash
+REDIS_URL=your_redis_connection_string
+```
 
-To learn more about Next.js, take a look at the following resources:
+Without `REDIS_URL`, the app uses an in-memory cache during runtime.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Scripts
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```bash
+npm run dev      # Start the local development server
+npm run build    # Create a production build
+npm run start    # Run the production build locally
+npm run lint     # Run ESLint
+```
 
-## Deploy on Vercel
+## Deployment
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+This project is ready for Vercel deployment.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+npm run build
+npx vercel --prod
+```
+
+The deployed production build is available at:
+
+[https://f1-dashboard-tau-seven.vercel.app](https://f1-dashboard-tau-seven.vercel.app)
+
+## Data Sources
+
+Race, session, standings, weather, timing, and race-control data are fetched from the [OpenF1 API](https://openf1.org/). Static circuit geometry and local visual assets are stored under `public/`.
+
+## Repository
+
+GitHub: [neevj2006/f1-dashboard](https://github.com/neevj2006/f1-dashboard)
