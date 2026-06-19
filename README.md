@@ -2,7 +2,7 @@
 
 A modern Formula 1 dashboard built with Next.js. It brings together race calendar data, standings, circuit visuals, driver profiles, constructor profiles, and race-session insights in one responsive web app.
 
-Live demo: [f1-dashboard-tau-seven.vercel.app](https://f1-dashboard-tau-seven.vercel.app)
+Live demo: [myf1-dashboard.vercel.app](https://myf1-dashboard.vercel.app/)
 
 ## Features
 
@@ -82,7 +82,7 @@ npx vercel --prod
 
 The deployed production build is available at:
 
-[https://f1-dashboard-tau-seven.vercel.app](https://f1-dashboard-tau-seven.vercel.app)
+[https://myf1-dashboard.vercel.app/](https://myf1-dashboard.vercel.app/)
 
 ## Data Sources
 
