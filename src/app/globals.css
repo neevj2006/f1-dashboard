@@ -1,0 +1,66 @@
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+::selection {
+  background: #e10600;
+  color: white;
+}
+
+.page-shell {
+  min-height: 100vh;
+  background:
+    linear-gradient(135deg, rgba(225, 6, 0, 0.2), transparent 24rem),
+    radial-gradient(circle at top right, rgba(255, 255, 255, 0.08), transparent 28rem),
+    #030303;
+}
+
+.scrollbar-f1,
+.scrollbar-f1 * {
+  scrollbar-color: #e10600 #111113;
+  scrollbar-width: thin;
+}
+
+.scrollbar-f1::-webkit-scrollbar,
+.scrollbar-f1 *::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.scrollbar-f1::-webkit-scrollbar-track,
+.scrollbar-f1 *::-webkit-scrollbar-track {
+  background: #111113;
+  border-radius: 999px;
+}
+
+.scrollbar-f1::-webkit-scrollbar-thumb,
+.scrollbar-f1 *::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #e10600, #7f1d1d);
+  border-radius: 999px;
+}
