@@ -1,13 +1,23 @@
-import Redis from "ioredis";
+import Redis, { type RedisOptions } from "ioredis";
 
 const BASE_URL = "https://api.openf1.org/v1";
 const memoryCache = new Map<string, { value: unknown; expires: number }>();
-let redis: Redis | null = null;
+const redisOptions: RedisOptions = {
+  maxRetriesPerRequest: 1,
+  lazyConnect: true,
+  connectTimeout: 2000,
+  commandTimeout: 2000,
+};
+
+declare global {
+  var openF1Redis: Redis | undefined;
+}
 
 function getRedis() {
-  if (!process.env.REDIS_URL) return null;
-  redis ??= new Redis(process.env.REDIS_URL, { maxRetriesPerRequest: 1, lazyConnect: true });
-  return redis;
+  const redisUrl = process.env.REDIS_URL;
+  if (!redisUrl) return null;
+  globalThis.openF1Redis ??= new Redis(redisUrl, redisOptions);
+  return globalThis.openF1Redis;
 }
 
 async function sleep(ms: number) {
@@ -24,7 +34,11 @@ export async function openF1Fetch<T>(path: string, ttlSeconds = 300): Promise<T>
   if (redisClient) {
     try {
       const cachedRedis = await redisClient.get(key);
-      if (cachedRedis) return JSON.parse(cachedRedis) as T;
+      if (cachedRedis) {
+        const value = JSON.parse(cachedRedis) as T;
+        memoryCache.set(key, { value, expires: now + ttlSeconds * 1000 });
+        return value;
+      }
     } catch {
       // Redis is optional in local development.
     }

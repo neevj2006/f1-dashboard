@@ -60,7 +60,9 @@ The app runs without required environment variables. For shared server-side cach
 REDIS_URL=your_redis_connection_string
 ```
 
-Without `REDIS_URL`, the app uses an in-memory cache during runtime.
+For local development, copy `.env.example` to `.env.local` and replace the value with your Redis database URL. For Vercel, add the same `REDIS_URL` in Project Settings > Environment Variables for Production, Preview, and Development as needed.
+
+Without `REDIS_URL`, the app uses an in-memory cache during runtime. If Redis is unreachable, OpenF1 requests continue with in-memory caching and direct fetch fallback.
 
 ## Scripts
 
